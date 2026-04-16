@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>联系我 | VisionaryX</title>
+    <style>
+        :root {
+            --ink-black: #2d1f1b;
+            --paper-white: #f9f6f0;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background:
+                url('{{ url_for("static", filename="images/bg4.png") }}');
+            background-size: cover;
+            color: var(--ink-black);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 主容器 */
+        .contact-wrapper {
+            width: 85%;
+            max-width: 800px;
+            margin: 5% auto;
+            padding: 40px;
+            position: relative;
+        }
+
+        /* 内容框 */
+        .content-box {
+            background: rgba(45, 31, 27, 0.7); /* 黑色半透明背景 */
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            opacity: 0;
+            animation: fadeIn 1s forwards 0.5s;
+        }
+
+        /* 标题 */
+        .title {
+            font-size: 1.8rem;
+            color: #f9f6f0;
+            margin: 0 0 20px 0;
+            letter-spacing: 2px;
+        }
+
+        /* 作者介绍 */
+        .author-info {
+            margin-bottom: 20px;
+            color: #f9f6f0;
+        }
+
+        /* 联系方式 */
+        .contact-info {
+            font-size: 0.9rem;
+            color: #f9f6f0;
+            opacity: 0;
+            animation: fadeIn 1s forwards 1s;
+        }
+
+        /* 返回按钮 */
+        .home-btn {
+            margin-top: 20px;
+            padding: 12px 20px;
+            background: rgba(45, 31, 27, 0.7);
+            color: #f9f6f0;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeIn 1s forwards 1.5s;
+        }
+
+        .home-btn:hover {
+            background: rgba(45, 31, 27, 0.9);
+            transform: scale(1.05);
+        }
+
+        /* 动画定义 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-wrapper">
+        <!-- 内容框 -->
+        <div class="content-box">
+            <h2 class="title">ABOUT ME</h2>
+            <div class="author-info">
+                <p>网站作者：张艺洋</p>
+            </div>
+            <div class="contact-info">
+                <p>email 3115628663@qq.com</p>
+            </div>
+        </div>
+
+        <!-- 返回按钮 -->
+        <div style="text-align: center;">
+            <a href="{{ url_for('index') }}" class="home-btn">HOME</a>
+        </div>
+    </div>
+</body>
+</html>

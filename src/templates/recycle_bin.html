@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recycle Bin</title>
+    <style>
+        /* 样式与 image_library.html 类似 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #121212; /* 深黑色背景 */
+            color: #ffffff; /* 白色文字 */
+        }
+        .sidebar {
+            width: 200px;
+            background-color: rgba(49, 49, 49, 0.96); /* 深灰色侧边栏 */
+            padding: 20px;
+            height: 100vh;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .image-container {
+            position: relative;
+            border: 1px solid #444;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: #2c2c2c;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 5px;
+            transition: transform 0.3s ease;
+            object-fit: cover;
+        }
+        .image-container:hover img {
+            transform: scale(1.1);
+        }
+        /* 选择圈样式 */
+        .check-circle {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #ccc;
+            text-align: center;
+            line-height: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        /* 选中状态的样式 */
+        .check-circle.checked {
+            background-color: #28a745;
+            color: white;
+        }
+
+        /* 按钮美化 */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            outline: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin: 10px 0; /* 增加按钮的上下间距 */
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            background-color: #004085;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+            transform: scale(0.95);
+        }
+
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>回收站</h2>
+        <div class="btn-container" style="display: flex; flex-direction: column;">
+        <button type="button" class="btn" onclick="location.href='{{ url_for('image_library', library_id=library_id) }}'">返回</button>
+            <button type="button" class="btn" onclick="toggleSelectAllInRecycleBin()">全选</button>
+        <button type="button" class="btn" onclick="restoreImages()">恢复已选</button>
+        <button type="button" class="btn" onclick="permanentlyDeleteSelectedImages()">永久删除</button>
+    </div>
+    </div>
+    <div class="main-content">
+        {% for image in images %}
+            <div class="image-container" id="image-{{ image.id }}" onclick="toggleSelect({{ image.id }})">
+                <img src="{{ url_for('static', filename='uploads/' + image.filename) }}" alt="Image">
+                <!-- 添加选择框 -->
+                <div class="check-circle" id="check-circle-{{ image.id }}"></div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        let selectedImages = [];
+
+        function toggleSelect(imageId) {
+            const checkCircle = document.getElementById(`check-circle-${imageId}`);
+            if (selectedImages.includes(imageId)) {
+                selectedImages = selectedImages.filter(id => id !== imageId); // 移除未选中的图像
+                checkCircle.classList.remove('checked');
+            } else {
+                selectedImages.push(imageId); // 添加选中的图像
+                checkCircle.classList.add('checked');
+            }
+            console.log("Selected Images:", selectedImages); // 调试信息
+        }
+
+        function restoreImages() {
+            if (selectedImages.length === 0) {
+                alert('请选择要恢复的图像');
+                return;
+            }
+
+            const libraryId = "{{ library_id }}"; // 获取当前库 ID
+
+            if (!libraryId) {
+                alert('Library ID is missing');
+                return;
+            }
+
+            fetch("{{ url_for('restore_images') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image_ids: selectedImages,
+                    library_id: libraryId  // 确保传递 library_id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url; // 重定向到图像库
+                } else {
+                    alert(data.message || '恢复失败');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('请求失败，请检查网络连接');
+            });
+        }
+
+        function permanentlyDeleteSelectedImages() {
+            if (selectedImages.length === 0) {
+                alert('Please select images to delete permanently.');
+                return;
+            }
+            if (confirm('Are you sure you want to permanently delete these images?')) {
+                fetch('/permanently_delete_images', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ image_ids: selectedImages })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          window.location.reload();
+                      } else {
+                          alert('Failed to delete images.');
+                      }
+                  });
+            }
+        }
+
+        // 用于跟踪是否全选状态
+        let isAllSelected = false;
+
+        // 全选按钮点击事件
+        function toggleSelectAllInRecycleBin() {
+            const imageContainers = document.querySelectorAll('.image-container');
+            const imageIds = Array.from(imageContainers).map(container => parseInt(container.id.split('-')[1], 10));
+            const selectAllButton = document.querySelector('.btn:nth-child(2)'); // 获取全选按钮
+
+            if (isAllSelected) {
+                // 如果已经全选，取消全选
+                isAllSelected = false;
+                selectAllButton.textContent = '全选';
+                imageIds.forEach(imageId => {
+                    const checkCircle = document.getElementById(`check-circle-${imageId}`);
+                    if (selectedImages.includes(imageId)) {
+                        selectedImages = selectedImages.filter(id => id !== imageId);
+                        checkCircle.classList.remove('checked');
+                    }
+                });
+            } else {
+                // 如果未全选，全选
+                isAllSelected = true;
+                selectAllButton.textContent = '取消全选';
+                imageIds.forEach(imageId => {
+                    const checkCircle = document.getElementById(`check-circle-${imageId}`);
+                    if (!selectedImages.includes(imageId)) {
+                        selectedImages.push(imageId);
+                        checkCircle.classList.add('checked');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

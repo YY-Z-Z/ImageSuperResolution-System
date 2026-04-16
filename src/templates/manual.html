@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超分重建功能说明书</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6b543e; /* 主色调-赭石色 */
+            --secondary-color: #c9a982; /* 辅助色-米黄 */
+        }
+
+        body {
+            background: url('/static/images/background.jpg') no-repeat center/cover fixed;
+            color: #4a3f35;
+            font-family: 'Noto Serif SC', serif;
+            line-height: 1.8;
+            padding: 40px 0;
+        }
+
+        .manual-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px;
+            background: rgba(255,255,255,0.93);
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .manual-title {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 3.5em;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 50px;
+            text-shadow: 2px 2px 4px rgba(107,84,62,0.2);
+        }
+
+        .section-block {
+            margin: 35px 0;
+            padding: 30px;
+            background: rgba(255,255,255,0.95);
+            border-left: 5px solid var(--secondary-color);
+            border-radius: 5px;
+            box-shadow: 3px 3px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .section-block:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 2em;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed var(--secondary-color);
+        }
+
+        .param-card {
+            padding: 20px;
+            margin: 20px 0;
+            background: rgba(201,169,130,0.1);
+            border-radius: 8px;
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .model-item {
+            padding: 15px;
+            text-align: center;
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .model-item:hover {
+            background: rgba(201,169,130,0.1);
+        }
+
+        .back-btn {
+            position: fixed;
+            left: 30px;
+            top: 30px;
+            padding: 12px 25px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 25px;
+            text-decoration: none;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tip-box {
+            padding: 15px;
+            margin: 20px 0;
+            background: rgba(107,84,62,0.05);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .manual-container {
+                margin: 15px;
+                padding: 20px;
+            }
+            .manual-title {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('super_resolution', library_id=library_id) }}" class="back-btn">← 返回</a>
+
+    <div class="manual-container">
+        <h1 class="manual-title">超分重建功能说明书</h1>
+
+        <!-- 上传部分 -->
+        <div class="section-block">
+            <h2>📤 图片上传</h2>
+            <div class="param-card">
+                <p><strong>支持格式：</strong>PNG / JPG / JPEG / BMP / WEBP</p>
+                <div class="tip-box">
+                    💡 上传成功后文件名将显示在下方，最大支持10MB文件
+                </div>
+            </div>
+        </div>
+
+        <!-- 参数设置 -->
+        <div class="section-block">
+            <h2>⚙️ 核心参数说明</h2>
+
+            <div class="param-card">
+                <h3>🔇 降噪等级 (0-3)</h3>
+                <ul>
+                    <li><strong>0级：无降噪</strong><br>
+                        • 适用场景：高精度扫描的动画原稿/游戏CG<br>
+                        • 效果：保留原始细节，仅做分辨率提升</li>
+                    <li><strong>1级：轻度降噪（默认）</strong><br>
+                        • 适用场景：现代动画截图/手机拍摄的漫画<br>
+                        • 效果：消除拍摄摩尔纹，轻微压缩噪点</li>
+                    <li><strong>2级：中度降噪</strong><br>
+                        • 适用场景：老旧DVD片源/低码率流媒体<br>
+                        • 效果：消除色块噪点，修复马赛克瑕疵</li>
+                    <li><strong>3级：强力降噪</strong><br>
+                        • 适用场景：90年代VHS录像带/扫描杂志图<br>
+                        • 效果：深度消除胶片颗粒，修复划痕</li>
+                </ul>
+            </div>
+
+            <div class="param-card">
+                <h3>🧠 AI模型选择</h3>
+                <div class="model-grid">
+                    <div class="model-item">
+                        <h4>VGG7（通用型）</h4>
+                        <p>• 网络结构：7层卷积<br>
+                           • 优势：处理速度快，内存占用低<br>
+                           • 适用：90%动漫场景的首选</p>
+                    </div>
+                    <div class="model-item">
+                        <h4>ResNet10（纹理增强）</h4>
+                        <p>• 网络结构：残差连接结构<br>
+                           • 优势：保持复杂图案完整性<br>
+                           • 适用：和服纹理/建筑背景/森林场景</p>
+                    </div>
+                    <div class="model-item">
+                        <h4>UpConv7（线条优化）</h4>
+                        <p>• 网络结构：反卷积上采样<br>
+                           • 优势：锐化边缘，防止线条模糊<br>
+                           • 适用：黑白漫画/赛璐璐风格动画</p>
+                    </div>
+                    <div class="model-item">
+                        <h4>UpResNet10（联合降噪）</h4>
+                        <p>• 网络结构：残差+反卷积混合<br>
+                           • 优势：同步处理噪点和分辨率<br>
+                           • 适用：修复类任务/重度压缩片源</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="param-card">
+                <h3>🖼️ 输出格式选择</h3>
+                <div class="tip-box">
+                    <strong>PNG格式：</strong>无损质量，适合后期编辑<br>
+                    <strong>WEBP格式：</strong>高压缩率，节省存储空间
+                </div>
+            </div>
+        </div>
+
+        <!-- 处理指南 -->
+        <div class="section-block">
+            <h2>🎯 处理模式指南</h2>
+            <div class="param-card">
+                <h3>🔧 三种处理方法</h3>
+                <ul>
+                    <li><strong>仅降噪：</strong>保持原尺寸，专注去除噪点</li>
+                    <li><strong>仅放大：</strong>无降噪处理，专注分辨率提升</li>
+                    <li><strong>降噪并放大：</strong>双重处理（推荐老照片修复）</li>
+                </ul>
+            </div>
+
+            <div class="param-card">
+                <h3>🔍 放大倍数设置</h3>
+                <div class="tip-box">
+                    💡 推荐范围：1x-4x<br>
+                    💣 超过6x可能导致细节失真<br>
+                    🚀 高性能设备可尝试8x极限放大
+                </div>
+            </div>
+        </div>
+
+        <!-- 最佳实践 -->
+        <div class="section-block">
+            <h2>🏆 最佳实践方案</h2>
+            <div class="model-grid">
+                <div class="model-item" style="background:rgba(107,84,62,0.05)">
+                    <h4>普通照片优化</h4>
+                    <p>降噪1级 + VGG7模型 + 降噪放大</p>
+                </div>
+                <div class="model-item" style="background:rgba(107,84,62,0.05)">
+                    <h4>老照片修复</h4>
+                    <p>降噪3级 + UpResNet10 + 降噪放大</p>
+                </div>
+                <div class="model-item" style="background:rgba(107,84,62,0.05)">
+                    <h4>插画增强</h4>
+                    <p>无降噪 + UpConv7 + 放大</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

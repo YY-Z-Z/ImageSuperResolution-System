@@ -1,0 +1,33 @@
+name: "anime_style_scale_y"
+layer {
+  name: "data"
+  type: "Input"
+  top: "data"
+  input_param { shape: { dim: 1 dim: 1 dim: 77 dim: 77 } }
+}
+layer {
+  type: "Convolution"
+  name: "Convolution2DFunction-0-1"
+  bottom: "data"
+  top: "Convolution2DFunction-0-1"
+  convolution_param {
+    num_output: 64
+    bias_term: true
+    pad_w: 0
+    pad_h: 0
+    stride_w: 1
+    stride_h: 1
+    kernel_w: 3
+    kernel_h: 3
+    group: 1
+  }
+}
+layer {
+  type: "ReLU"
+  name: "LeakyReLU-1-1"
+  bottom: "Convolution2DFunction-0-1"
+  top: "LeakyReLU-1-1"
+  relu_param {
+    negative_slope: 0.1
+  }
+}

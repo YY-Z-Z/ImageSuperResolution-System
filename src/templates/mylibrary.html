@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Libraries</title>
+    <style>
+        body {
+            background: none;
+            color: #c9d1d9; /* GitHub暗黑模式文字颜色 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; /* GitHub使用的字体 */
+            margin: 0;
+            padding: 0;
+        }
+
+        body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('{{ url_for("static", filename="images/bg3.jpg") }}');
+        background-size: cover;
+        animation: bg-zoom 1.5s ease-out forwards;
+        z-index: -2;
+    }
+
+    @keyframes bg-zoom {
+        from {
+            opacity: 0;
+            transform: scale(1.1);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* 修改原有背景样式 */
+    body {
+        background: none;
+    }
+
+    /* 添加背景覆盖层 */
+    .bg-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+    }
+
+        .library-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.69); /* GitHub暗黑模式容器背景色 */
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* 增加阴影效果 */
+        }
+
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .library-card {
+            background: #232323; /* GitHub暗黑模式卡片背景色 */
+            padding: 20px;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 增加卡片阴影 */
+        }
+
+        .library-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* 悬停时增加阴影 */
+        }
+
+        .library-name {
+            color: #c9d1d9; /* GitHub暗黑模式文字颜色 */
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+
+        .library-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px; /* 稍微圆润的按钮 */
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: 500; /* 按钮文字加粗 */
+        }
+
+        .btn-primary {
+            background: #238636; /* GitHub暗黑模式绿色按钮 */
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2ea043; /* 悬停时稍微亮一点的绿色 */
+            transform: translateY(-1px); /* 悬停时轻微上移 */
+        }
+
+        .btn-danger {
+            background: #da3633; /* GitHub暗黑模式红色按钮 */
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #f85149; /* 悬停时稍微亮一点的红色 */
+            transform: translateY(-1px); /* 悬停时轻微上移 */
+        }
+
+        .create-form {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-input {
+            flex: 1;
+            padding: 10px;
+            background: #0d1117; /* GitHub暗黑模式输入框背景色 */
+            border: 1px solid #30363d; /* GitHub暗黑模式输入框边框 */
+            color: #c9d1d9; /* GitHub暗黑模式输入框文字颜色 */
+            border-radius: 6px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: #238636; /* 聚焦时边框变为绿色 */
+            outline: none;
+        }
+            /* 新增进入动画 */
+    .library-container {
+        animation: page-enter 0.6s ease forwards;
+        opacity: 0;
+    }
+
+    @keyframes page-enter {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    </style>
+</head>
+<body>
+    <div class="bg-overlay"></div>
+    <div class="library-container">
+        <h1 style="color: white;">图像库</h1>
+
+        <!-- 创建新库表单 -->
+        <form class="create-form" onsubmit="createLibrary(event)">
+            <input type="text"
+                   class="form-input"
+                   placeholder="Enter new library name"
+                   required
+                   id="libraryName">
+            <button type="submit" class="btn btn-primary">创建</button>
+        </form>
+
+        <!-- 库列表 -->
+        <div class="library-grid">
+            {% for library in libraries %}
+            <div class="library-card">
+                <div class="library-name">{{ library.name }}</div>
+                <div class="library-actions">
+                    <button class="btn btn-primary"
+                            onclick="location.href='{{ url_for('image_library', library_id=library.id) }}'">
+                        进入
+                    </button>
+                    <button class="btn btn-danger"
+                            onclick="deleteLibrary({{ library.id }}, this)">
+                        删除
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        // 创建新库
+        function createLibrary(event) {
+            event.preventDefault();
+            const name = document.getElementById('libraryName').value;
+
+            fetch("{{ url_for('create_library') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `name=${encodeURIComponent(name)}`
+            })
+            .then(response => {
+                if(response.ok) {
+                    location.reload(); // 刷新显示新库
+                } else {
+                    alert('Create Error');
+                }
+            })
+        }
+
+        // 删除库
+        function deleteLibrary(libraryId, button) {
+            if(!confirm('Are you sure you want to delete this library? All images will be permanently deleted!')) return;
+
+            fetch(`/delete_library/${libraryId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    button.closest('.library-card').remove();
+                } else {
+                    alert(data.message || 'Delete Error');
+                }
+            })
+        }
+    </script>
+</body>
+</html>
