@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Resolution</title>
+    <style>
+        /* 全局样式 */
+        body {
+            background-image: url('{{ url_for("static", filename="images/background.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 容器样式 */
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 标题样式 */
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.2em;
+        }
+
+        /* 上传按钮样式 */
+        .upload-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .upload-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* 选择框样式 */
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #282c34;
+            color: #ffffff;
+        }
+
+        .form-control option {
+            background-color: #282c34;
+            color: #ffffff;
+        }
+
+        /* 处理按钮样式 */
+        .process-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .process-button:hover {
+            background-color: #218838;
+        }
+
+        /* 保存按钮样式 */
+        .save-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #e06f79;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .save-button:hover {
+            background-color: #a8555d;
+        }
+
+        /* 图片样式 */
+        .preview, .processed-image {
+            max-width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px auto;
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .form-group label {
+                font-size: 1em;
+            }
+
+            .upload-button, .process-button, .save-button {
+                font-size: 14px;
+            }
+        }
+
+        /* 新增的跳转按钮样式 */
+        .library-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 20px;
+            background-color: #ff9500; /* 与其他按钮颜色不同 */
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .library-button:hover {
+            background-color: #e08900;
+        }
+
+        /* 最优选 */
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: rgba(0, 0, 0, 0.9);
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            color: white;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: white;
+        }
+
+        .image-comparison {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .image-container {
+            text-align: center;
+        }
+
+        .modal-buttons {
+            text-align: center;
+        }
+
+        /* 不满意按钮样式 */
+        .unsatisfied-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745; /* 绿色 */
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .unsatisfied-button:hover {
+            background-color: #218838; /* 深绿色 */
+        }
+
+        /*等待动画*/
+        /* 加载动画样式 */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+            color: white;
+            font-size: 1.5em;
+        }
+
+        .loading-spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid rgba(0, 0, 0, 0.52);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('manual', library_id=library_id) }}" class="library-button" style="background-color: #4e9a06; top: 120px;">说明书</a>
+    <a href="{{ url_for('image_library', library_id=library_id) }}" class="library-button" style="background-color: #4e9a06;top: 60px;">图像库</a>
+    <a href="{{ url_for('my_library') }}" class="library-button" style="background-color: #4e9a06; ">主页</a>
+
+
+    <div class="container fade-in">
+        <h1>超分辨率重建</h1>
+        <form id="super-resolution-form" action="{{ url_for('super_resolution', library_id=library_id) }}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file-upload" class="upload-button">上传图像</label>
+                <input type="file" id="file-upload" class="file-input" name="file" accept="image/*" style="display: none;">
+                <span id="file-upload-status" style="margin-left: 10px; font-size: 14px; color: #a8a8a8;"></span>
+                {% if last_filename %}已加载:{{ last_filename }}{% endif %}
+            </div>
+            <div class="form-group">
+                <label for="noise-level">选择降噪等级:</label>
+                <div>
+                    <input type="radio" id="noise-level-0" name="noise_level" value="0">
+                    <label for="noise-level-0">0</label>
+                    <input type="radio" id="noise-level-1" name="noise_level" value="1" checked>
+                    <label for="noise-level-1">1</label>
+                    <input type="radio" id="noise-level-2" name="noise_level" value="2">
+                    <label for="noise-level-2">2</label>
+                    <input type="radio" id="noise-level-3" name="noise_level" value="3">
+                    <label for="noise-level-3">3</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="model">选择模型:</label>
+                <select name="model" class="form-control">
+                    <option value="VGG7">VGG7</option>
+                    <option value="ResNet10">ResNet10</option>
+                    <option value="UpConv7">UpConv7</option>
+                    <option value="UpResNet10">UpResNet10</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="extension">输出格式:</label>
+                <select name="extension" class="form-control">
+                    <option value="png">.png</option>
+                    <option value="webp">.webp</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="method">处理方式:</label>
+                <div>
+                    <input type="radio" id="method-noise" name="method" value="noise">
+                    <label for="method-noise">降噪</label>
+                    <input type="radio" id="method-scale" name="method" value="scale" checked>
+                    <label for="method-scale">无损放大</label>
+                    <input type="radio" id="method-noise-scale" name="method" value="noise_scale">
+                    <label for="method-noise-scale">降噪+放大</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="scale-ratio">输入放大倍数 (0.1 to 8):</label>
+                <input type="number" id="scale-ratio" name="scale_ratio" value="2" min="0.1" max="8" step="0.1" class="form-control">
+            </div>
+            <div class="form-group text-center">
+                <input type="submit" value="Process Image" class="process-button">
+            </div>
+        </form>
+    </div>
+
+
+    <!-- 在 body 标签内添加加载动画 -->
+    <div id="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Processing, please wait...</p>
+    </div>
+
+
+    <script>
+        document.getElementById('file-upload').addEventListener('change', function(event) {
+            const fileInput = event.target;
+            const statusSpan = document.getElementById('file-upload-status');
+
+            if (fileInput.files && fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+                statusSpan.textContent = `上传成功: ${fileName}`;
+                statusSpan.style.color = '#cacbca';
+            } else {
+                statusSpan.textContent = '没有文件上传';
+                statusSpan.style.color = '#a8a8a8'; // 灰色表示未选择文件
+            }
+        });
+
+        document.getElementById('super-resolution-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // 阻止表单默认提交行为
+
+            // 检查是否有已保存的文件
+            const lastFilename = localStorage.getItem('lastFilename');
+            const fileInput = document.getElementById('file-upload');
+
+            if (!fileInput.files.length && lastFilename) {
+                // 自动创建虚拟文件对象
+                const file = new File([""], lastFilename, { type: 'image/*' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+            }
+
+            const formData = new FormData(this); // 获取表单数据
+            fetch("{{ url_for('super_resolution', library_id=library_id) }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+                if (data.success) {
+                    // 添加 library_id 参数 ↓↓↓
+                    window.location.href = `/comparison?original=${encodeURIComponent(data.original_image)}&processed=${encodeURIComponent(data.processed_image)}&library_id=${data.library_id}`;
+                } else {
+                    alert('处理失败: ' + data.message);
+                }
+            });
+        });
+
+        function saveToLibrary(imagePath) {
+            fetch('/save_to_library', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image_path: imagePath })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Image saved to library successfully!');
+                } else {
+                    alert('Failed to save image to library.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to save image to library.');
+            });
+        }
+
+        //说明书
+        // 跳转到说明书界面
+        function openManual() {
+            window.location.href = "/manual"; // 确保路径正确
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById("manualModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        //等待动画
+        // 在表单提交时显示加载动画
+        document.getElementById('super-resolution-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            const formData = new FormData(this);
+            fetch("{{ url_for('super_resolution', library_id=library_id) }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+                if (data.success) {
+                    window.location.href = `/comparison?original=${encodeURIComponent(data.original_image)}&processed=${encodeURIComponent(data.processed_image)}&library_id=${data.library_id}`;
+                } else {
+                    alert('处理失败: ' + data.message);
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Selection Result</title>
+    <style>
+        body {
+            background-image: url('{{ url_for("static", filename="images/background.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .result-section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #0d1117;
+            border-radius: 6px;
+        }
+
+        .chart-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .chart-image {
+            max-width: 100%;
+            border-radius: 6px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid rgba(240,246,252,0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #238636;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2ea043;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>自动检测的最佳参数：</h1>
+
+        <div class="result-section">
+            <p>推荐模型: <strong>{{ best_model }}</strong></p>
+            <p>推荐降噪程度: <strong>{{ best_noise_level }}</strong></p>
+            <p>PSNR+SSIM+MSE Score: <strong>{{ best_psnr }}</strong></p>
+        </div>
+
+        <div class="chart-container">
+            <img src="{{ chart_url }}" class="chart-image" alt="PSNR Chart">
+        </div>
+
+        <div class="psnr-info">
+            <p>
+                <strong>Score由峰值信噪比（PSNR）、结构相似性（SSIM）和均方误差（MSE）组成。</strong>
+                分数越高，表示图像质量越好。通常：
+                <ul>
+                    <li>Score > 0.7 ：图像质量非常好</li>
+                    <li>0.5 < Score ≤ 0.7：图像质量良好</li>
+                    <li>Score ≤ 0.5：图像质量欠佳</li>
+                </ul>
+            </p>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="applySettings()">应用</button>
+            <button class="btn btn-primary" onclick="window.history.back()">返回</button>
+        </div>
+    </div>
+
+    <script>
+
+       function applySettings() {
+            // 获取当前页面的library_id（需确保模板渲染时传递了该参数）
+            const libraryId = "{{ library_id }}";
+            const filename = "{{ image_path.split('/')|last }}"; // 从当前页面获取文件名
+            // 将设置存储到localStorage并返回原页面
+            localStorage.setItem('autoSelectModel', "{{ best_model }}");
+            localStorage.setItem('autoSelectNoise', "{{ best_noise_level }}");
+            localStorage.setItem('lastFilename', filename);
+            // 跳转到super_resolution页面
+            window.location.href = `/super_resolution/${libraryId}`;
+            window.location.href = `/super_resolution/${libraryId}?last_file=${encodeURIComponent(filename)}`;
+        }
+
+        // 页面加载时检查localStorage
+        window.addEventListener('load', () => {
+            const model = localStorage.getItem('autoSelectModel');
+            const noise = localStorage.getItem('autoSelectNoise');
+            if (model && noise) {
+                // 清理存储
+                localStorage.removeItem('autoSelectModel');
+                localStorage.removeItem('autoSelectNoise');
+
+                // 自动填充表单
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'applyAutoSettings',
+                        model: model,
+                        noise: noise
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

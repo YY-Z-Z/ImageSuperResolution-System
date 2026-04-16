@@ -1,0 +1,180 @@
+name: "anime_style_noise1_rgb"
+layer {
+  name: "data"
+  type: "Input"
+  top: "data"
+  input_param { shape: { dim: 1 dim: 3 dim: 71 dim: 71 } }
+}
+layer {
+  type: "Convolution"
+  name: "Convolution2DFunction-0-1"
+  bottom: "data"
+  top: "Convolution2DFunction-0-1"
+  convolution_param {
+    num_output: 32
+    bias_term: true
+    pad_w: 0
+    pad_h: 0
+    stride_w: 1
+    stride_h: 1
+    kernel_w: 3
+    kernel_h: 3
+    group: 1
+  }
+}
+layer {
+  type: "ReLU"
+  name: "LeakyReLU-1-1"
+  bottom: "Convolution2DFunction-0-1"
+  top: "LeakyReLU-1-1"
+  relu_param {
+    negative_slope: 0.1
+  }
+}
+layer {
+  type: "Convolution"
+  name: "Convolution2DFunction-2-1"
+  bottom: "LeakyReLU-1-1"
+  top: "Convolution2DFunction-2-1"
+  convolution_param {
+    num_output: 32
+    bias_term: true
+    pad_w: 0
+    pad_h: 0
+    stride_w: 1
+    stride_h: 1
+    kernel_w: 3
+    kernel_h: 3
+    group: 1
+  }
+}
+layer {
+  type: "ReLU"
+  name: "LeakyReLU-3-1"
+  bottom: "Convolution2DFunction-2-1"
+  top: "LeakyReLU-3-1"
+  relu_param {
+    negative_slope: 0.1
+  }
+}
+layer {
+  type: "Convolution"
+  name: "Convolution2DFunction-4-1"
+  bottom: "LeakyReLU-3-1"
+  top: "Convolution2DFunction-4-1"
+  convolution_param {
+    num_output: 64
+    bias_term: true
+    pad_w: 0
+    pad_h: 0
+    stride_w: 1
+    stride_h: 1
+    kernel_w: 3
+    kernel_h: 3
+    group: 1
+  }
+}
+layer {
+  type: "ReLU"
+  name: "LeakyReLU-5-1"
+  bottom: "Convolution2DFunction-4-1"
+  top: "LeakyReLU-5-1"
+  relu_param {
+    negative_slope: 0.1
+  }
+}
+layer {
+  type: "Convolution"
+  name: "Convolution2DFunction-6-1"
+  bottom: "LeakyReLU-5-1"
+  top: "Convolution2DFunction-6-1"
+  convolution_param {
+    num_output: 64
+    bias_term: true
+    pad_w: 0
+    pad_h: 0
+    stride_w: 1
+    stride_h: 1
+    kernel_w: 3
+    kernel_h: 3
+    group: 1
+  }
+}
+layer {
+  type: "ReLU"
+  name: "LeakyReLU-7-1"
+  bottom: "Convolution2DFunction-6-1"
+  top: "LeakyReLU-7-1"
+  relu_param {
+    negative_slope: 0.1
+  }
+}
+layer {
+  type: "Convolution"
+  name: "Convolution2DFunction-8-1"
+  bottom: "LeakyReLU-7-1"
+  top: "Convolution2DFunction-8-1"
+  convolution_param {
+    num_output: 128
+    bias_term: true
+    pad_w: 0
+    pad_h: 0
+    stride_w: 1
+    stride_h: 1
+    kernel_w: 3
+    kernel_h: 3
+    group: 1
+  }
+}
+layer {
+  type: "ReLU"
+  name: "LeakyReLU-9-1"
+  bottom: "Convolution2DFunction-8-1"
+  top: "LeakyReLU-9-1"
+  relu_param {
+    negative_slope: 0.1
+  }
+}
+layer {
+  type: "Convolution"
+  name: "Convolution2DFunction-10-1"
+  bottom: "LeakyReLU-9-1"
+  top: "Convolution2DFunction-10-1"
+  convolution_param {
+    num_output: 128
+    bias_term: true
+    pad_w: 0
+    pad_h: 0
+    stride_w: 1
+    stride_h: 1
+    kernel_w: 3
+    kernel_h: 3
+    group: 1
+  }
+}
+layer {
+  type: "ReLU"
+  name: "LeakyReLU-11-1"
+  bottom: "Convolution2DFunction-10-1"
+  top: "LeakyReLU-11-1"
+  relu_param {
+    negative_slope: 0.1
+  }
+}
+layer {
+  type: "Convolution"
+  name: "Convolution2DFunction-12-1"
+  bottom: "LeakyReLU-11-1"
+  top: "Convolution2DFunction-12-1"
+  convolution_param {
+    num_output: 3
+    bias_term: true
+    pad_w: 0
+    pad_h: 0
+    stride_w: 1
+    stride_h: 1
+    kernel_w: 3
+    kernel_h: 3
+    group: 1
+  }
+}

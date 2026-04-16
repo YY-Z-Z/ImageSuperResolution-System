@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Library</title>
+    <style>
+        /* 页面整体样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: rgba(0, 0, 0, 0.93);
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 180px;
+            background-color: rgba(45, 45, 45, 0.58);
+            padding: 20px;
+            height: 100vh;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease !important; /* 添加visibility过渡 */
+            transform: translateX(-100%); /* 默认隐藏 */
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .sidebar.visible {
+            transform: translateX(0)!important; /* 显示侧边栏 */
+        }
+
+        /* 侧边栏标题样式 */
+        .sidebar h2 {
+            margin-bottom: 20px;
+            color: #e8e8e8; /* 深灰色标题 */
+        }
+
+        /* 侧边栏按钮样式 */
+        .sidebar button {
+            background-color: #3c3f41; /* 黑色背景 */
+            color: white; /* 白色文字 */
+            border: 1px solid #989898; /* 白色边框，宽度为2px */
+            padding: 10px; /* 内边距 */
+            width: 100%; /* 宽度占满父容器 */
+            margin-bottom: 10px; /* 底部外边距 */
+            cursor: pointer; /* 鼠标悬停时显示手型 */
+            font-size: 14px; /* 按钮字体大小 */
+            border-radius: 5px; /* 圆角效果 */
+            transition: background-color 0.3s ease, transform 0.2s ease; /* 平滑的颜色和变形过渡效果 */
+        }
+
+        /* 明确侧边栏和主内容的联动关系，相邻兄弟选择器 自动调整主内容位置 */
+        .sidebar.visible + .main-content {
+            transform: translateX(220px); /* 180px(侧边栏宽度) + 40px(间距) */
+            transition: transform 0.3s ease;
+        }
+
+        /* 按钮悬停效果 */
+        .sidebar button:hover {
+            background-color: #181818;
+        }
+
+        /* 返回按钮样式 */
+        .back-button {
+            background-color: #3c3f41; /* 黑色背景 */
+            color: white; /* 白色文字 */
+            border: 1px solid #989898; /* 白色边框，宽度为2px */
+            padding: 10px; /* 内边距 */
+            width: 100%; /* 宽度占满父容器 */
+            margin-bottom: 10px; /* 底部外边距 */
+            cursor: pointer; /* 鼠标悬停时显示手型 */
+            font-size: 14px; /* 按钮字体大小 */
+            border-radius: 5px; /* 圆角效果 */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        /* 返回按钮悬停效果 */
+        .back-button:hover {
+            background-color: #181818;
+        }
+
+        /* 文件上传区域样式 */
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        /* 隐藏原生文件输入按钮 */
+        .file-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0; /* 隐藏文件输入按钮 */
+            cursor: pointer;
+        }
+
+        /* 自定义文件上传按钮样式 */
+        .file-upload .upload-label {
+            background-color: #3c3f41;
+            color: white;
+            border: 1px solid #989898;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px; /* 标签字体大小 */
+            border-radius: 5px; /* 圆角效果 */
+            transition: background-color 0.3s ease; /* 平滑的颜色过渡效果 */
+        }
+
+        /* 文件上传按钮悬停效果 */
+        .file-upload :hover {
+            background-color: #1c1c1c;
+        }
+
+        /* 文件计数显示样式 */
+        .file-upload .file-count {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #555;
+            text-align: center;
+        }
+
+        /* 主内容区域样式 */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            background-color: rgb(43, 43, 44);
+            border-radius: 10px;
+            transform: translateX(20px);
+            transition: transform 0.3s ease, margin-right 0.3s ease; /* 保持平滑过渡 */
+            min-height: calc(100vh - 40px); /* 确保高度占满 */
+        }
+
+
+        /* 图像容器样式 */
+        .image-container {
+            position: relative;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: rgba(115, 115, 115, 0.66);
+            width: 150px; /* 固定宽度 */
+            height: 150px; /* 固定高度 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 图像样式 */
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 5px;
+            transition: transform 0.3s ease;
+            object-fit: cover; /* 确保图像覆盖整个容器 */
+        }
+
+        /* 图像悬停放大效果 */
+        .image-container:hover img {
+            transform: scale(1.1); /* 鼠标悬停时放大 */
+        }
+
+        /* 选择圈样式 */
+        .check-circle {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #ccc;
+            text-align: center;
+            line-height: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* 平滑的颜色过渡效果 */
+        }
+
+        /* 选中状态的样式 */
+        .check-circle.checked {
+            background-color: #28a745;
+            color: white;
+        }
+
+        /* 标签样式 */
+        .label {
+            position: absolute;
+            bottom: 5px; /* 距离底部5像素 */
+            right: 5px; /* 距离右侧5像素 */
+            background-color: rgba(255, 255, 255, 0.8); /* 半透明背景 */
+            border: 1px solid #ccc; /* 边框 */
+            border-radius: 5px; /* 圆角 */
+            padding: 2px 5px; /* 内边距 */
+            font-size: 12px;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1; /* 确保标签在图像上方 */
+        }
+
+        /* 编辑标签表单样式 */
+        .edit-label-form {
+            display: none;
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+        }
+
+        /* 编辑标签输入框样式 */
+        .edit-label-form input[type="text"] {
+            width: auto;
+            max-width: 100px; /* 设置最大宽度，确保不超过图片宽度 */
+            padding: 2px;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: rgba(86, 86, 86, 0.8);
+        }
+
+        /* 分组标签视图 */
+        .label-group {
+            margin-bottom: 20px;
+        }
+
+        .label-group h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #ffffff;
+        }
+
+        #search-label-input {
+            width: 150px; /* 设置输入框宽度 */
+            padding: 10px; /* 内边距 */
+            font-size: 15px; /* 字体大小 */
+            border: 1px solid #ccc; /* 边框样式 */
+            border-radius: 5px; /* 圆角边框 */
+            background-color: #5d5d5d; /* 背景颜色 */
+            color: #ffffff; /* 文字颜色 */
+            outline: none; /* 移除聚焦时的默认轮廓 */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease; /* 平滑过渡效果 */
+        }
+
+        /* 标签框样式 */
+        .label-box {
+            background-color: rgba(171, 171, 171, 0.8); /* 半透明背景 */
+            border: 1px solid #ccc; /* 边框 */
+            border-radius: 10px; /* 圆角 */
+            padding: 10px; /* 内边距 */
+            margin-bottom: 10px; /* 与下方内容的间距 */
+        }
+
+        /* 标签选择框样式 */
+        .label-select {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: white; /* 初始颜色为白色 */
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        /* 标签选择框选中状态 */
+        .label-select.selected {
+            background-color: #28a745; /* 选中状态为绿色 */
+        }
+
+        /* 操作栏隐藏 切换按钮样式 */
+        .toggle-sidebar {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #3c3f41;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 1001;
+            transition: background-color 0.3s ease;
+        }
+        .toggle-sidebar:hover {
+            background-color: #000000;
+        }
+        .toggle-sidebar img {
+            width: 16px;
+            height: 16px;
+        }
+
+        /*标签视图*/
+        /* 右侧目录栏样式 */
+        .toc-sidebar {
+            width: 200px;
+            background-color: rgb(35, 35, 35);
+            padding: 20px;
+            height: 100vh;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+            display: none; /* 默认隐藏 */
+            position: fixed; /* 关键：固定定位 */
+            right: 0; /* 关键：右侧对齐 */
+            top: 0;
+            z-index: 2000; /* 确保层级高于主内容 */
+            overflow-y: auto; /* 添加垂直滚动条 */
+        }
+
+        /* 目录项样式 */
+        .toc-sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc-sidebar li a {
+            text-decoration: none;
+            color: #ffffff;
+            display: block;
+            padding: 5px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .toc-sidebar li a:hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* 标签视图下的主内容布局 */
+        .main-content.label-view {
+            width: calc(100vw - 500px)!important; /* 减去目录栏宽度（200px）和间距（40px） */
+            margin-right: 500px!important; /* 与目录栏的间距（200px宽度 + 40px缓冲） */
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 减少列宽以适应狭窄空间 */
+            gap: 10px;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .toc-sidebar.visible {
+            display: flex;
+            opacity: 1;
+            visibility: visible;
+            z-index: 2000;
+        }
+        .toc-sidebar h2 {
+            color: #ffffff;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+
+        /* 双击后浏览图像 */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            overflow: auto;
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+            animation: zoom 0.3s;
+        }
+
+        @keyframes zoom {
+            from {transform: scale(0.1)}
+            to {transform: scale(1)}
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #detailBtn {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background-color: #238636;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        z-index: 3001;
+        }
+        #detailBtn:hover {
+            background-color: #2ea043;
+        }
+    </style>
+</head>
+<body>
+    <!-- 操作栏隐藏切换按钮 -->
+    <button class="toggle-sidebar" onclick="toggleSidebar()">
+        <img id="sidebar-icon" src="../static/images/vec_right.png" alt="Toggle Sidebar">
+    </button>
+    <!-- 主内容区域 -->
+    <div class="main-content" id="main-content">
+        {% for image in images %}
+            <div class="image-container" id="image-{{ image.id }}"
+                 onclick="toggleSelect({{ image.id }})"
+                 ondblclick="viewImage('{{ url_for('static', filename='uploads/' + image.filename) }}', {{ image.id }})">
+                <img src="{{ url_for('static', filename='uploads/' + image.filename) }}" alt="Image">
+                <div class="check-circle" id="check-circle-{{ image.id }}"></div>
+                <div class="label" id="label-{{ image.id }}" ondblclick="event.stopPropagation(); editLabel({{ image.id }})">{{ image.label }}</div>
+                <form action="#" method="post" class="edit-label-form" id="edit-form-{{ image.id }}">
+                    <input type="text" name="new_label" id="new-label-{{ image.id }}" value="{{ image.label }}" placeholder="Edit Label" onblur="saveLabel({{ image.id }})" onkeypress="if(event.key === 'Enter') saveLabel({{ image.id }})">
+                </form>
+            </div>
+        {% endfor %}
+        <div class="selection-box" id="selection-box"></div>
+    </div>
+    <!--侧边栏-->
+    <div class="sidebar" id="sidebar">
+        <br>
+        <br>
+        <h2>操作栏</h2>
+        <form action="{{ url_for('upload_image', library_id=library_id) }}" method="post" enctype="multipart/form-data">
+            <div class="file-upload">
+                <input type="file" name="file" multiple id="file-input">
+                <button type="button" class="upload-label">选择图像</button>
+                <div class="file-count" id="file-count">没有图像被选择</div>
+            </div>
+            <button type="submit" class="upload-button">上传图像</button>
+        </form>
+        <button type="button" class="select-all-button" onclick="toggleSelectAllImages()">全选</button>
+
+        <form action="{{ url_for('delete_image') }}" method="post">
+            <input type="hidden" name="image_ids" id="selected-images">
+            <input type="hidden" name="library_id" value="{{ library_id }}">
+            <button type="submit" class="delete-button">删除已选</button>
+        </form>
+
+        <button type="button" class="super-resolution-button" onclick="location.href='{{ url_for('super_resolution', library_id=library_id) }}'">超分重建</button>
+        <!-- 添加标签查找框和按钮 -->
+        <div class="search-label">
+            <input type="text" id="search-label-input" placeholder="Search by label">
+            <button type="button" class="search-label-button" onclick="searchByLabel()">查找</button>
+            <button type="button" class="cancel-search-button" onclick="cancelSearch()" style="display: none;">取消查找</button>
+        </div>
+        <!-- 添加总体视图和标签视图按钮 -->
+        <button type="button" id="grid-view-button" class="view-button" onclick="showGridView()">全局视图</button>
+        <button type="button" id="label-view-button" class="view-button" onclick="showLabelView()">标签视图</button>
+        <!--添加回收站按钮-->
+        <button type="button" onclick="location.href='{{ url_for('recycle_bin') }}'">回收站</button>
+        <button type="button" class="back-button"  onclick="goToMyLibrary()">我的图像库</button>
+    </div>
+    <div class="toc-sidebar" id="toc-sidebar">
+        <h2>标签</h2>
+        <ul id="toc-list"></ul>
+    </div>
+
+    <!-- 包裹主内容和目录栏的容器 -->
+    <div class="container">
+        <div class="main-content" id="main-content"></div>
+        <div class="toc-sidebar" id="toc-sidebar"></div>
+    </div>
+
+    <!-- 图像浏览模态窗口 -->
+    <div id="imageModal" class="image-modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
+        <button id="detailBtn" onclick="viewDetail()">更多</button>
+    </div>
+
+
+    <script>
+        // 切换侧边栏显示/隐藏
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const icon = document.getElementById('sidebar-icon');
+
+            if (sidebar.classList.contains('visible')) {
+                sidebar.classList.remove('visible');
+                icon.src = '../static/images/vec_right.png';
+                mainContent.style.transform = 'translateX(20px)'; // 改为 transform
+                // 保存状态到 LocalStorage
+                localStorage.setItem('sidebarVisible', 'false');
+            } else {
+                sidebar.classList.add('visible');
+                icon.src = '../static/images/vec_left.png';
+                mainContent.style.transform = 'translateX(220px)'; // 180px(width) + 40px(gap)
+                localStorage.setItem('sidebarVisible', 'true');
+            }
+        }
+        // 页面加载时恢复状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedState = localStorage.getItem('sidebarVisible');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+
+            if (savedState === 'true') {
+                sidebar.classList.add('visible');
+                mainContent.style.transform = 'translateX(200px)';
+            } else {
+                sidebar.classList.remove('visible');
+                mainContent.style.transform = 'translateX(20px)';
+            }
+        });
+
+        // 动态计算宽度（可选）
+        function updateMainContentPosition() {
+            const sidebarWidth = document.getElementById('sidebar').offsetWidth;
+            document.getElementById('main-content').style.transform = `translateX(${sidebarWidth + 20}px)`;
+        }
+
+        window.addEventListener('resize', updateMainContentPosition);
+
+
+        // 监听文件选择框的变化
+        document.getElementById('file-input').addEventListener('change', function() {
+            const fileCount = this.files.length;
+            const fileCountDiv = document.getElementById('file-count');
+            if (fileCount > 0) {
+                fileCountDiv.textContent = `已选择 ${fileCount} 张图像`;
+            } else {
+                fileCountDiv.textContent = '没有文件被选择';
+            }
+        });
+
+        // 用于存储选中的图像ID
+        let selectedImages = [];
+        // 用于跟踪是否全选状态
+        let isAllSelected = false;
+        // 获取全选按钮
+        const selectAllButton = document.querySelector('.select-all-button');
+
+        // 切换图像的选中状态
+        function toggleSelect(imageId) {
+            const checkCircle = document.getElementById(`check-circle-${imageId}`);
+            if (selectedImages.includes(imageId)) {
+                selectedImages = selectedImages.filter(id => id !== imageId);
+                checkCircle.classList.remove('checked');
+                console.log("Removed image:", imageId);
+                if (isAllSelected) {
+                    isAllSelected = false;
+                    selectAllButton.textContent = 'Select All';
+                }
+            } else {
+                selectedImages.push(imageId);
+                checkCircle.classList.add('checked');
+                console.log("Added image:", imageId);
+                const imageIds = Array.from(document.querySelectorAll('.image-container')).map(container => container.id.split('-')[1]);
+                if (selectedImages.length === imageIds.length) {
+                    isAllSelected = true;
+                    selectAllButton.textContent = 'Deselect All';
+                }
+            }
+            document.getElementById('selected-images').value = selectedImages.join(',');
+            console.log("Selected images:", selectedImages);
+            console.log("Is all selected:", isAllSelected);
+        }
+
+        // 切换全选或取消全选
+        function toggleSelectAllImages() {
+            const imageIds = Array.from(document.querySelectorAll('.image-container')).map(container => parseInt(container.id.split('-')[1], 10));
+            if (isAllSelected) {
+                imageIds.forEach(imageId => {
+                    const checkCircle = document.getElementById(`check-circle-${imageId}`);
+                    if (selectedImages.includes(imageId)) {
+                        selectedImages = selectedImages.filter(id => id !== imageId);
+                        checkCircle.classList.remove('checked');
+                        console.log("Removed image:", imageId);
+                        document.getElementById('selected-images').value = selectedImages.join(',');
+                        console.log("Selected images:", selectedImages);
+                    }
+                });
+                isAllSelected = false;
+                selectAllButton.textContent = '全选';
+            } else {
+                imageIds.forEach(imageId => {
+                    const checkCircle = document.getElementById(`check-circle-${imageId}`);
+                    if (!selectedImages.includes(imageId)) {
+                        selectedImages.push(imageId);
+                        checkCircle.classList.add('checked');
+                        console.log("Added image:", imageId);
+                        document.getElementById('selected-images').value = selectedImages.join(',');
+                        console.log("Selected images:", selectedImages);
+                    }
+                });
+                isAllSelected = true;
+                selectAllButton.textContent = '取消全选';
+            }
+        }
+
+        // 编辑标签的函数
+        function editLabel(imageId) {
+            const labelDiv = document.getElementById(`label-${imageId}`);
+            const editForm = document.getElementById(`edit-form-${imageId}`);
+            const newLabelInput = document.getElementById(`new-label-${imageId}`);
+
+            labelDiv.style.display = 'none'; // 隐藏原始标签
+            editForm.style.display = 'block'; // 显示编辑表单
+            newLabelInput.focus(); // 聚焦到输入框
+        }
+
+        // 保存标签的函数
+        function saveLabel(imageId) {
+            const labelDiv = document.getElementById(`label-${imageId}`);
+            const editForm = document.getElementById(`edit-form-${imageId}`);
+            const newLabelInput = document.getElementById(`new-label-${imageId}`);
+
+            const newLabel = newLabelInput.value.trim();
+            if (newLabel) {
+                // 发送AJAX请求更新标签
+                fetch(`/edit_label/${imageId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `new_label=${newLabel}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        labelDiv.textContent = newLabel; // 更新显示的标签
+                    } else {
+                        alert('Failed to update label.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to update label.');
+                });
+            }
+
+            // 隐藏编辑表单，显示原始标签
+            editForm.style.display = 'none';
+            labelDiv.style.display = 'block';
+        }
+
+        // 阻止表单提交
+        document.querySelectorAll('.edit-label-form').forEach(form => {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault(); // 阻止表单默认提交行为
+                const imageId = form.id.split('-')[2];
+                saveLabel(imageId);
+            });
+        });
+
+        // 按下回车键时保存标签
+        document.querySelectorAll('.edit-label-form input[type="text"]').forEach(input => {
+            input.addEventListener('keypress', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // 阻止默认的提交行为
+                    const imageId = this.id.split('-')[2];
+                    saveLabel(imageId);
+                }
+            });
+        });
+
+        // 标签查找功能
+        function searchByLabel() {
+            const searchInput = document.getElementById('search-label-input');
+            const searchLabel = searchInput.value.trim().toLowerCase();
+            if (searchLabel === '') {
+                alert('Please enter a label to search');
+                return;
+            }
+
+            const imageContainers = document.querySelectorAll('.image-container');
+            imageContainers.forEach(container => {
+                const label = container.querySelector('.label').textContent.toLowerCase();
+                if (label.includes(searchLabel)) {
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                }
+            });
+
+            // 显示取消查找按钮
+            document.querySelector('.cancel-search-button').style.display = 'block';
+            document.querySelector('.search-label-button').style.display = 'none';
+        }
+
+        // 取消查找功能
+        function cancelSearch() {
+            const imageContainers = document.querySelectorAll('.image-container');
+            imageContainers.forEach(container => {
+                container.style.display = 'block';
+            });
+
+            // 隐藏取消查找按钮，显示查找按钮
+            document.querySelector('.cancel-search-button').style.display = 'none';
+            document.querySelector('.search-label-button').style.display = 'block';
+
+            // 清空查找框
+            document.getElementById('search-label-input').value = '';
+        }
+
+        // 标签选择框点击事件
+        document.querySelectorAll('.label-select').forEach(select => {
+            select.addEventListener('click', function () {
+                const label = this.id.split('-')[2]; // 获取标签名称
+                const groupContainer = document.getElementById(`group-container-${label}`);
+                const imageContainers = groupContainer.querySelectorAll('.image-container');
+                const isChecked = this.classList.contains('selected');
+
+                if (isChecked) {
+                    // 如果已经选中，取消全选
+                    this.classList.remove('selected');
+                    imageContainers.forEach(container => {
+                        const imageId = container.id.split('-')[1];
+                        toggleSelect(imageId);
+                    });
+                } else {
+                    // 如果未选中，全选
+                    this.classList.add('selected');
+                    imageContainers.forEach(container => {
+                        const imageId = container.id.split('-')[1];
+                        toggleSelect(imageId);
+                    });
+                }
+            });
+        });
+
+        function toggleSelectAllInLabelGroup(label) {
+            const labelSelect = document.getElementById(`label-select-${label}`);
+            const groupContainer = document.getElementById(`group-container-${label}`);
+            const imageContainers = groupContainer.querySelectorAll('.image-container');
+
+            if (labelSelect.classList.contains('selected')) {
+                // 如果已经选中，取消全选
+                labelSelect.classList.remove('selected');
+                imageContainers.forEach(container => {
+                    const imageId = container.id.split('-')[1];
+                    toggleSelect(imageId);
+                });
+            } else {
+                // 如果未选中，全选
+                labelSelect.classList.add('selected');
+                imageContainers.forEach(container => {
+                    const imageId = container.id.split('-')[1];
+                    toggleSelect(imageId);
+                });
+            }
+        }
+
+        // 标签视图
+        function showLabelView() {
+            const mainContent = document.querySelector('.main-content');
+            const tocSidebar = document.getElementById('toc-sidebar');
+            const container = document.querySelector('.container');
+            mainContent.style.display = 'block'; // 切换为块级布局
+            // 显示目录栏并设置主内容宽度
+            tocSidebar.classList.add('visible');
+            mainContent.classList.add('label-view');
+
+            // 禁用标签视图下的拖动功能
+            const imageContainers = mainContent.querySelectorAll('.image-container');
+            imageContainers.forEach(container => {
+                container.removeAttribute('draggable');
+                container.ondragstart = null;
+                container.ondragover = null;
+                container.ondrop = null;
+            });
+
+            // 调整容器布局
+            container.style.display = 'flex';
+            mainContent.style.marginRight = '500px'; // 与CSS中的margin-right一致
+
+            // 获取所有图像容器
+            //const imageContainers = Array.from(mainContent.querySelectorAll('.image-container'));
+
+            // 创建一个映射，按标签分组图像
+            const labelGroups = {};
+            imageContainers.forEach(container => {
+                const label = container.querySelector('.label').textContent;
+                if (!labelGroups[label]) {
+                    labelGroups[label] = [];
+                }
+                labelGroups[label].push(container);
+            });
+
+            // 保存初始分布的图像容器状态
+            const initialImageContainers = Array.from(mainContent.querySelectorAll('.image-container')).map(container => container.cloneNode(true));
+
+            // 清除主内容区域的现有内容
+            mainContent.innerHTML = '';
+
+            // 按标签顺序排列并添加到主内容区域
+            Object.keys(labelGroups).sort().forEach(label => {
+                const group = document.createElement('div');
+                group.classList.add('label-group');
+                group.style.marginBottom = '20px';
+
+                // 创建标签框
+                const labelBox = document.createElement('div');
+                labelBox.classList.add('label-box');
+                labelBox.style.backgroundColor = 'rgba(0,0,0,0.23)'; // 半透明背景
+                labelBox.style.border = '1px solid #ccc'; // 边框
+                labelBox.style.borderRadius = '10px'; // 圆角
+                labelBox.style.padding = '10px'; // 内边距
+                labelBox.style.marginBottom = '10px'; // 与下方内容的间距
+
+                const labelHeader = document.createElement('h3');
+                labelHeader.textContent = label;
+                labelHeader.style.margin = '0 0 10px 0';
+                labelHeader.style.fontSize = '16px';
+                labelHeader.style.color = '#ffffff';
+
+                // 添加选择框
+                const labelSelect = document.createElement('span');
+                labelSelect.classList.add('label-select');
+                labelSelect.id = `label-select-${label}`;
+
+                labelHeader.appendChild(labelSelect);
+                labelBox.appendChild(labelHeader);
+
+                const groupContainer = document.createElement('div');
+                groupContainer.classList.add('group-container');
+                groupContainer.id = `group-container-${label}`;
+                groupContainer.style.display = 'grid';
+                groupContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(150px, 1fr))';
+                groupContainer.style.gap = '10px';
+
+                labelGroups[label].forEach(container => {
+                    container.style.display = 'block'; // 确保图像容器在标签视图中可见
+                    groupContainer.appendChild(container);
+                });
+
+                labelBox.appendChild(groupContainer);
+                group.appendChild(labelBox);
+                mainContent.appendChild(group);
+
+                // 为标签选择框添加点击事件
+                labelSelect.addEventListener('click', () => {
+                    toggleSelectAllInLabelGroup(label);
+                });
+
+                // 生成目录项
+                const tocList = document.getElementById('toc-list');
+                const tocItem = document.createElement('li');
+                const tocLink = document.createElement('a');
+                tocLink.href = `#group-container-${label}`;
+                tocLink.textContent = label;
+                tocLink.onclick = () => {
+                    const target = document.getElementById(`group-container-${label}`);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                };
+                tocItem.appendChild(tocLink);
+                tocList.appendChild(tocItem);
+            });
+
+            // 显示目录栏
+            document.getElementById('toc-sidebar').style.display = 'block';
+            // 保存初始图像容器状态到全局变量
+            window.initialImageContainers = initialImageContainers;
+        }
+
+        // 在切换回全局视图时恢复初始分布并隐藏目录栏
+        function showGridView() {
+            const mainContent = document.querySelector('.main-content');
+            const tocSidebar = document.getElementById('toc-sidebar');
+            const container = document.querySelector('.container');
+            // 强制从后端重新加载数据（通过刷新页面）
+            location.reload(); // 直接刷新页面以获取最新顺序
+            mainContent.style.display = 'grid'; // 恢复网格布局
+            mainContent.style.gridTemplateColumns = 'repeat(auto-fill, minmax(150px, 1fr))';
+            mainContent.style.gap = '10px';
+
+            // 隐藏目录栏并重置主内容样式
+            tocSidebar.classList.remove('visible');
+            mainContent.classList.remove('label-view');
+            // 恢复容器布局
+            container.style.display = 'flex';
+            mainContent.style.marginRight = '0'; // 重置右边距
+
+            // 恢复全局视图下的拖动功能
+            const imageContainers = mainContent.querySelectorAll('.image-container');
+            imageContainers.forEach(container => {
+                container.setAttribute('draggable', 'true');
+                container.ondragstart = dragStart;
+                container.ondragover = dragOver;
+                container.ondrop = drop;
+            });
+
+            // 清除主内容区域的分组内容
+            const labelGroups = mainContent.querySelectorAll('.label-group');
+            labelGroups.forEach(group => group.remove());
+
+            // 恢复所有图像容器的显示
+            if (window.initialImageContainers) {
+                mainContent.innerHTML = '';
+                window.initialImageContainers.forEach(container => {
+                    mainContent.appendChild(container.cloneNode(true));
+                });
+            }
+
+            // 清空目录栏
+            document.getElementById('toc-list').innerHTML = '';
+            document.getElementById('toc-sidebar').style.display = 'none';
+        }
+
+        window.addEventListener('resize', () => {
+            if (document.querySelector('.main-content').classList.contains('label-view')) {
+                const mainContent = document.querySelector('.main-content');
+                mainContent.style.width = `calc(100% - 800px)`;
+                mainContent.style.marginRight = '800px';
+            }
+        });
+
+        // 查看大图
+        let currentImageId = null;
+        function viewImage(imageUrl,imageId) {
+            currentImageId = imageId;
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = "block";
+            modalImg.src = imageUrl;
+        }
+        function viewDetail() {
+            if (currentImageId) {
+                window.location.href = `/image_detail/${currentImageId}`;
+            }
+        }
+
+        // 关闭模态窗口
+        function closeModal() {
+            document.getElementById('imageModal').style.display = "none";
+        }
+
+        // 点击模态窗口外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('imageModal');
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // 返回我的库页面
+        function goToMyLibrary() {
+            // 使用Flask的url_for生成返回链接
+            window.location.href = "{{ url_for('my_library') }}";
+        }
+
+    </script>
+</body>
+</html>

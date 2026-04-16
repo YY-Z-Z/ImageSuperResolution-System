@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵晰影溯 - VisionaryX</title>
+    <style>
+        @font-face {
+            font-family: 'TitleFont';
+            src: url('{{ url_for("static", filename="front/f1.ttf") }}') format('truetype');
+        }
+        @font-face {
+            font-family: 'TitleFont2';
+            src: url('{{ url_for("static", filename="front/f3.ttf") }}') format('truetype');
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: white;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 1.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        /* 背景图层 */
+        .bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .bg-layer-1 {
+            background-image: url('{{ url_for("static", filename="images/bg2.png") }}');
+            opacity: 1;
+            z-index: -2;
+        }
+
+        .bg-layer-2 {
+            background-image: url('{{ url_for("static", filename="images/background.jpg") }}');
+            opacity: 0;
+            z-index: -3;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 97%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+            opacity: 0;
+            animation: navFadeIn 1.5s ease-out forwards;
+        }
+
+        .nav-button {
+            padding: 10px 15px;
+            text-decoration: none;
+            color: black;
+            background: transparent;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-button:hover {
+            color: red;
+        }
+
+        .nav-button.active {
+            color: gray;
+        }
+
+        /* 标题容器 */
+        .title-group {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            opacity: 0;
+            animation: titleFadeIn 1.5s ease-out forwards;
+        }
+
+        h1 {
+            font-family: 'TitleFont2', sans-serif;
+            font-size: 4em;
+            color: rgb(0, 0, 0);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            margin: 0;
+        }
+
+        h2 {
+            font-family: 'TitleFont', sans-serif;
+            font-size: 2.2em;
+            color: rgb(0, 0, 0);
+            letter-spacing: 6px;
+            margin-top: 1rem;
+        }
+
+        /* 按钮 */
+        .button {
+            font-family: 'TitleFont', sans-serif;
+            font-size: 1.2em;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            position: absolute;
+            bottom: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            animation: buttonFadeIn 1.5s ease-out forwards;
+        }
+
+        .button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateX(-50%) scale(1.1);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+
+        /* 动画关键帧 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                filter: blur(8px);
+            }
+            to {
+                opacity: 1;
+                filter: blur(0);
+            }
+        }
+
+        @keyframes navFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes titleFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -30%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        @keyframes buttonFadeIn {
+            from {
+                opacity: 0;
+                bottom: 15%;
+            }
+            to {
+                opacity: 1;
+                bottom: 25%;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        .fade-out {
+            animation: fadeOut 1.5s ease-in-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景图层 -->
+    <div class="bg-layer bg-layer-1"></div>
+    <div class="bg-layer bg-layer-2"></div>
+
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <a href="{{ url_for('index') }}" class="nav-button active">HOME</a>
+        <a href="{{ url_for('introduction') }}" class="nav-button">INTRODUCTION</a>
+        <a href="{{ url_for('contact') }}" class="nav-button">CONTACT</a>
+    </div>
+
+    <div class="title-group">
+        <h1>灵 晰 影 溯</h1>
+        <h2>VisionaryX</h2>
+    </div>
+    <a href="{{ url_for('login') }}" class="button" id="mainButton">Go</a>
+
+    <script>
+        // 添加背景和文字淡出动画
+        document.getElementById('mainButton').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // 触发背景切换动画
+            document.querySelector('.bg-layer-1').style.opacity = '0';
+            document.querySelector('.bg-layer-2').style.opacity = '1';
+
+            // 触发文字淡出动画
+            document.querySelector('.title-group').classList.add('fade-out');
+            this.classList.add('fade-out');
+
+            // 触发导航栏淡出动画
+            document.querySelector('.navbar').classList.add('fade-out');
+
+            // 等待动画完成后跳转
+            setTimeout(() => {
+                window.location.href = this.href;
+            }, 1500); // 动画时长
+        });
+
+        // 导航按钮点击事件
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // 移除所有按钮的 active 类
+                document.querySelectorAll('.nav-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                // 为当前点击的按钮添加 active 类
+                this.classList.add('active');
+
+                // 跳转到目标页面
+                window.location.href = this.href;
+            });
+        });
+    </script>
+</body>
+</html>

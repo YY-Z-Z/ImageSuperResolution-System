@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --border-color: #30363d;
+            --text-color: #c9d1d9;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+        .editor-area {
+            background: #161b22;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+        }
+        #canvas-wrapper {
+                position: relative;
+                width: 100%;
+                height: 70vh; /* 使用视口高度百分比代替固定高度 */
+                min-height: 400px; /* 保持最小高度 */
+                max-height: 800px; /* 设置最大高度限制 */
+                overflow: hidden;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+    /* 新增自适应缩放功能 */
+    .canvas-container {
+        position: relative !important; /* 覆盖fabric.js的内联样式 */
+        max-width: 100%;
+        max-height: 100%;
+        transition: transform 0.3s ease;
+    }
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        button {
+            background-color: #238636;
+            color: white;
+            border: 1px solid #2ea043;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2ea043;
+        }
+        .metadata {
+            background: #161b22;
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            border-radius: 6px;
+        }
+        .metadata-item {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        /* 增强工具控件样式 */
+        .brush-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        #brushColor {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #30363d;
+            cursor: pointer;
+        }
+
+        #brushSize {
+            width: 100px;
+            background: #30363d;
+        }
+
+        /* 添加Cropper覆盖层样式 */
+        #crop-wrapper {
+            background: var(--bg-color);
+        }
+        .cropper-view-box {
+            outline: 2px solid #2ea043;
+        }
+        .cropper-line {
+            background-color: #2ea043;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="editor-area">
+            <div class="toolbar">
+                <button onclick="rotate(-90)">↺ 左90°</button>
+                <button onclick="rotate(90)">↻ 右90°</button>
+                <button onclick="toggleCrop()">✂️ 裁剪</button>
+                <button onclick="toggleDraw()">🖌️ 画笔</button>
+                <button onclick="saveChanges()">💾 保存</button>
+            </div>
+            <div id="canvas-wrapper">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="metadata">
+            <button onclick="goBackToLibrary()" style="margin-bottom: 20px;">← 返回</button>
+            <h2>图像信息</h2>
+            <div class="metadata-item">
+                <strong>文件名:</strong> {{ image.filename }}
+            </div>
+            <div class="metadata-item">
+                <strong>分辨率:</strong> {{ width }}x{{ height }}
+            </div>
+            <div class="metadata-item">
+                <strong>上传时间:</strong> {{ upload_time.strftime('%Y-%m-%d %H:%M') }}
+            </div>
+            <div class="metadata-item">
+                <strong>标签:</strong> {{ image.label }}
+            </div>
+        </div>
+        <!-- 在toolbar区域添加新控件 -->
+        <div class="toolbar">
+            <!-- 原有按钮保持不变 -->
+            <div class="brush-controls" style="margin-left: auto;">
+                <input type="color" id="brushColor" value="#ff0000" title="Brush Color">
+                <input type="range" id="brushSize" min="1" max="50" value="5" title="Brush Size">
+                <span style="color: white; font-size: 14px;">Size: <span id="brushSizeValue">5</span>px</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script>
+        let canvas = new fabric.Canvas('mainCanvas', {
+            backgroundColor: '#0d1117',
+            isDrawingMode: false
+        });
+        let currentRotation = 0;
+
+        // 加载图像
+        fabric.Image.fromURL("{{ url_for('static', filename='uploads/' + image.filename) }}", img => {
+            const container = document.getElementById('canvas-wrapper');
+            const aspectRatio = img.width / img.height;
+
+            // 根据容器尺寸和图像比例动态计算
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+            let targetWidth, targetHeight;
+
+            if (containerWidth / containerHeight > aspectRatio) {
+                targetHeight = containerHeight;
+                targetWidth = targetHeight * aspectRatio;
+            } else {
+                targetWidth = containerWidth;
+                targetHeight = targetWidth / aspectRatio;
+            }
+
+            // 设置画布尺寸
+            canvas.setWidth(targetWidth);
+            canvas.setHeight(targetHeight);
+
+            // 居中图像
+            img.set({
+                scaleX: targetWidth / img.width,
+                scaleY: targetHeight / img.height,
+                left: targetWidth/2,
+                top: targetHeight/2,
+                originX: 'center',
+                originY: 'center'
+            });
+
+            canvas.add(img);
+            canvas.renderAll();
+
+            // 添加窗口大小变化监听
+            window.addEventListener('resize', () => {
+                canvas.setDimensions({
+                    width: Math.min(container.offsetWidth, targetWidth),
+                    height: Math.min(container.offsetHeight, targetHeight)
+                });
+                canvas.renderAll();
+            });
+        });
+
+        //裁剪功能
+        let isCropping = false;
+        let cropper = null;
+
+        function toggleCrop() {
+            if (isCropping) {
+                // 应用裁剪
+                const croppedCanvas = cropper.getCroppedCanvas();
+                const croppedDataURL = croppedCanvas.toDataURL();
+
+                // 清除画布并加载裁剪后的图像
+                fabric.Image.fromURL(croppedDataURL, img => {
+                    canvas.clear();
+                    img.set({
+                        selectable: true,
+                        hasControls: true
+                    });
+                    canvas.add(img);
+                    canvas.renderAll();
+                });
+
+                // 清理Cropper
+                cropper.destroy();
+                document.getElementById('crop-wrapper').remove();
+                document.getElementById('mainCanvas').style.display = 'block';
+                isCropping = false;
+            } else {
+                // 进入裁剪模式
+                isCropping = true;
+                const dataURL = canvas.toDataURL({ format: 'png' });
+
+                // 创建裁剪容器
+                const wrapper = document.createElement('div');
+                wrapper.id = 'crop-wrapper';
+                wrapper.style.position = 'absolute';
+                wrapper.style.top = '0';
+                wrapper.style.left = '0';
+                wrapper.style.width = '100%';
+                wrapper.style.height = '100%';
+                wrapper.style.zIndex = 1000;
+
+                // 创建临时图片元素
+                const img = document.createElement('img');
+                img.src = dataURL;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+
+                // 组装元素
+                wrapper.appendChild(img);
+                document.getElementById('canvas-wrapper').appendChild(wrapper);
+
+                // 隐藏原生canvas
+                document.getElementById('mainCanvas').style.display = 'none';
+
+                // 初始化Cropper
+                cropper = new Cropper(img, {
+                    aspectRatio: NaN,
+                    viewMode: 1,
+                    autoCropArea: 0.8,
+                    responsive: true,
+                    checkCrossOrigin: false
+                });
+            }
+        }
+
+        // 保存功能
+        async function saveChanges() {
+            // 将画布内容导出为DataURL
+            const dataURL = canvas.toDataURL({
+                format: 'png',
+                quality: 1
+            });
+
+            // 发送到后端
+            try {
+                const response = await fetch('/save_edited_image/{{ image.id }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image_data: dataURL,
+                        library_id:" {{ library_id }}"
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Image save success！');
+                    window.location.reload();
+                } else {
+                    throw new Error('Save failure! ');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Save failure: ' + error.message);
+            }
+        }
+
+
+
+        function handleResponse(response) {
+            if (!response.ok) throw new Error('Save failed');
+            alert('Saved successfully!');
+            window.location.reload();
+        }
+
+        function handleError(error) {
+            console.error('Error:', error);
+            alert('Save failed: ' + error.message);
+        }
+
+        function goBackToLibrary() {
+            window.location.href = "{{ url_for('image_library', library_id=library_id) }}";
+        }
+
+        //绘图功能
+        // 初始化画笔
+        let isDrawingMode = false;
+        let currentColor = '#ff0000';
+        let currentWidth = 5;
+
+        // 监听控件变化
+        // 修改绘图功能逻辑
+        function toggleDraw() {
+            canvas.isDrawingMode = !canvas.isDrawingMode;
+            if (canvas.isDrawingMode) {
+                updateBrush(); // 激活时立即更新属性
+            }
+        }
+
+        function updateBrush() {
+            canvas.freeDrawingBrush.color = currentColor;
+            canvas.freeDrawingBrush.width = currentWidth;
+        }
+
+        // 添加实时预览
+        document.getElementById('brushColor').addEventListener('input', (e) => {
+            currentColor = e.target.value;
+            if (canvas.isDrawingMode) updateBrush();
+        });
+
+        document.getElementById('brushSize').addEventListener('input', (e) => {
+            currentWidth = parseInt(e.target.value);
+            document.getElementById('brushSizeValue').textContent = currentWidth;
+            if (canvas.isDrawingMode) updateBrush();
+        });
+
+        //旋转
+        function rotate(degrees) {
+            canvas.getObjects().forEach(obj => {
+                // 确保角度计算正确
+                let newAngle = (obj.angle + degrees + 360) % 360;
+                obj.rotate(newAngle);
+
+                // 保持图像中心位置
+                obj.set({
+                    left: canvas.width/2,
+                    top: canvas.height/2,
+                    originX: 'center',
+                    originY: 'center'
+                });
+            });
+            canvas.renderAll();
+        }
+    </script>
+</body>
+</html>
